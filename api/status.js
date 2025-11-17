@@ -1,23 +1,22 @@
-// api/status.js (最終除錯版)
 export default function handler(request, response) {
-    console.log("--- 進入 /api/status 最終除錯 ---");
-    
-    const authHeader = request.headers.authorization;
-    const secretFromFrontend = authHeader?.split(' ')[1];
-    const secretFromServer = process.env.APP_ADMIN_KEY;
+        console.log("--- 進入 /api/status 最終除錯 ---");
+        
+        const authHeader = request.headers.authorization;
+        const secretFromFrontend = authHeader?.split(' ')[1];
+        const secretFromServer = process.env.APP_ADMIN_KEY;
 
-    // 為了看得更清楚，我們用 JSON.stringify 來顯示，這樣空格和特殊字元都會現形
-    console.log("從前端收到的 Secret:", JSON.stringify(secretFromFrontend));
-    console.log("伺服器上的 APP_ADMIN_KEY:", JSON.stringify(secretFromServer));
-    
-    if (secretFromFrontend === secretFromServer) {
-        console.log("驗證成功！");
-        return response.status(200).json({ message: "驗證通過！" });
-    } else {
-        console.log("驗證失敗！");
-        return response.status(401).json({ message: "密碼不匹配" });
+        // 為了看得更清楚，我們用 JSON.stringify 來顯示，這樣空格和特殊字元都會現形
+        console.log("從前端收到的 Secret:", JSON.stringify(secretFromFrontend));
+        console.log("伺服器上的 APP_ADMIN_KEY:", JSON.stringify(secretFromServer));
+        
+        if (secretFromFrontend === secretFromServer) {
+            console.log("驗證成功！");
+            return response.status(200).json({ message: "驗證通過！" });
+        } else {
+            console.log("驗證失敗！");
+            return response.status(401).json({ message: "密碼不匹配" });
+        }
     }
-}
 // // api/status.js (多活動支援版)
 
 // import { kv } from '@vercel/kv';
@@ -80,6 +79,7 @@ export default function handler(request, response) {
 //     }
 
 // }
+
 
 
 
