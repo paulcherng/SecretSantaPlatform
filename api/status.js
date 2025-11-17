@@ -1,12 +1,18 @@
-// api/status.js (終極測試版)
+// 步驟 1 測試
 
 export default function handler(request, response) {
-    console.log("--- 終極測試：/api/status 檔案被成功執行了！ ---");
+    console.log("--- 步驟 1 測試：檢查環境變數 ---");
+    console.log("伺服器上的 ADMIN_SECRET:", process.env.ADMIN_SECRET);
+
+    const secret = request.headers.authorization?.split(' ')[1];
     
-    response.status(200).json({
-        message: "Hello from the test API!",
-        timestamp: new Date().toISOString(),
-    });
+    if (secret !== process.env.ADMIN_SECRET) {
+        console.log("驗證失敗！");
+        return response.status(401).json({ message: "密碼錯誤" });
+    }
+
+    console.log("驗證成功！");
+    response.status(200).json({ message: "步驟 1 測試成功，密碼正確！" });
 }
 // // api/status.js (多活動支援版)
 
@@ -70,4 +76,5 @@ export default function handler(request, response) {
 //     }
 
 // }
+
 
