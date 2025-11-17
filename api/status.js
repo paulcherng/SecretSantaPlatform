@@ -4,7 +4,14 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(request, response) {
     if (request.method !== 'GET') return response.status(405).end();
-    const secret = request.headers.authorization?.split(' ')[1];
+       // --- 除錯 Log 開始 ---
+    console.log("--- 進入 /api/status ---");
+    const authHeader = request.headers.authorization;
+    const secret = authHeader?.split(' ')[1];
+    console.log("從前端收到的 Secret (Bearer Token):", secret);
+    console.log("伺服器環境變數中的 ADMIN_SECRET:", process.env.ADMIN_SECRET);
+    console.log("兩者是否相等?", secret === process.env.ADMIN_SECRET);
+    // --- 除錯 Log 結束 ---
     if (secret !== process.env.ADMIN_SECRET) return response.status(401).end();
 
     try {
@@ -51,4 +58,5 @@ export default async function handler(request, response) {
         console.error("Status API Error:", error);
         return response.status(500).json({ message: '獲取狀態時發生錯誤。' });
     }
+
 }
