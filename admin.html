@@ -5,35 +5,214 @@
     <title>抽籤後台</title>
     <!-- 沿用上次美化過的 CSS -->
     <style>
-        :root { --primary-color: #007bff; --success-color: #28a745; --danger-color: #dc3545; --light-gray: #f8f9fa; --border-color: #dee2e6; --text-color: #212529; --text-muted: #6c757d; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray); color: var(--text-color); margin: 0; padding: 40px 20px; }
-        h1, h2, h3 { color: var(--text-color); }
-        h1 { text-align: center; margin-bottom: 2rem; }
-        .page-container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; vertical-align: middle; word-break: break-all; }
-        th { background-color: var(--light-gray); font-weight: 600; color: var(--text-muted); }
+        :root { 
+            --primary-color: #4f46e5; 
+            --primary-hover: #4338ca;
+            --success-color: #10b981; 
+            --danger-color: #ef4444; 
+            --danger-hover: #dc2626;
+            --light-gray: #f9fafb; 
+            --border-color: #e5e7eb; 
+            --text-color: #111827; 
+            --text-muted: #6b7280;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-color); 
+            margin: 0; 
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        h1, h2, h3 { color: var(--text-color); margin-top: 0; }
+        h1 { text-align: center; margin-bottom: 2rem; font-size: 2rem; }
+        h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+        
+        .page-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background-color: white; 
+            padding: 2.5rem; 
+            border-radius: 12px; 
+            box-shadow: var(--shadow-lg);
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 14px 16px; 
+            text-align: left; 
+            vertical-align: middle;
+        }
+        
+        th { 
+            background-color: var(--light-gray); 
+            font-weight: 600; 
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        
         tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: #f1f3f5; }
-        button { border: 1px solid transparent; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; margin: 0 4px; }
-        button:focus { outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover { background-color: #0069d9; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-danger:hover { background-color: #c82333; }
-        .btn-secondary { background-color: #6c757d; color: white; }
-        .btn-secondary:hover { background-color: #5a6268; }
-        .btn-outline-danger { background-color: transparent; color: var(--danger-color); border-color: var(--danger-color); }
-        .btn-outline-danger:hover { background-color: var(--danger-color); color: white; }
-        button:disabled { background-color: #e9ecef; border-color: #e9ecef; color: #6c757d; cursor: not-allowed; opacity: 0.65; }
-        .message { padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 6px; }
-        .message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        tr:hover { background-color: #f9fafb; }
+        
+        button { 
+            border: none;
+            border-radius: 8px; 
+            padding: 10px 20px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            margin: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        button:focus { 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+        
+        .btn-primary { 
+            background-color: var(--primary-color); 
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover { 
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-danger { 
+            background-color: var(--danger-color); 
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-danger:hover { 
+            background-color: var(--danger-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary { 
+            background-color: #6b7280; 
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-secondary:hover { 
+            background-color: #4b5563;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-outline-danger { 
+            background-color: transparent; 
+            color: var(--danger-color); 
+            border: 2px solid var(--danger-color);
+        }
+        .btn-outline-danger:hover { 
+            background-color: var(--danger-color); 
+            color: white;
+        }
+        
+        button:disabled { 
+            background-color: #e5e7eb; 
+            color: #9ca3af; 
+            cursor: not-allowed; 
+            opacity: 0.6;
+            transform: none !important;
+        }
+        
+        .message { 
+            padding: 1rem 1.25rem; 
+            margin-bottom: 1.5rem; 
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .message.success { 
+            background-color: #d1fae5; 
+            color: #065f46; 
+            border-left: 4px solid var(--success-color);
+        }
+        .message.error { 
+            background-color: #fee2e2; 
+            color: #991b1b; 
+            border-left: 4px solid var(--danger-color);
+        }
+        
         .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: .5rem; }
-        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; }
-        .wish-content.hidden { color: transparent; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; cursor: pointer; }
+        .form-group label { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: .5rem;
+            color: var(--text-color);
+        }
+        .form-group input, .form-group textarea, .form-group select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { 
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .controls {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .wish-content.hidden { 
+            color: transparent; 
+            text-shadow: 0 0 8px rgba(0,0,0,0.5); 
+            user-select: none; 
+            cursor: pointer;
+        }
+        
         .hidden { display: none; }
+        
+        #status-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
     </style>
 </head>
 <body>
@@ -70,7 +249,11 @@
         </div>
         <div class="form-group">
             <label for="groupsConfig">組別設定 (JSON 格式)</label>
-            <textarea id="groupsConfig" rows="10" placeholder='[&#10;  { "id": 1, "name": "光佑", "limit": 1, "members": ["光佑"] },&#10;  { "id": 2, "name": "Jefferson", "limit": 1, "members": ["Jefferson"] },&#10;  { "id": 3, "name": "PJ一家", "limit": 2, "members": ["PJ", "PJ太太"] }&#10;]'></textarea>
+            <textarea id="groupsConfig" rows="10">[
+  { "id": 1, "name": "光佑", "limit": 1, "members": ["光佑"] },
+  { "id": 2, "name": "Jefferson", "limit": 1, "members": ["Jefferson"] },
+  { "id": 3, "name": "PJ一家", "limit": 2, "members": ["PJ", "PJ太太"] }
+]</textarea>
             <small>請依照 JSON 陣列格式填寫，確保 id 是從 1 開始的連續數字。members 陣列用來指定組別內的成員名單。</small>
         </div>
         <button class="btn-primary" onclick="handleCreateEvent()">確認建立</button>

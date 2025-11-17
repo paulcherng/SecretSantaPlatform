@@ -38,7 +38,19 @@ export default async function handler(request, response) {
         
         // 如果是管理員，回傳完整資料
         if (isAdmin) {
-            const participants = Array.isArray(data) ? data.participants || data : [];
+            // 處理兩種資料格式：陣列（未抽籤）或物件（已抽籤）
+            let participants = [];
+            let drawCompleted = false;
+            let emailsSent = false;
+
+            if (Array.isArray(data)) {
+                participants = data;
+            } else if (data && typeof data === 'object') {
+                participants = data.participants || [];
+                drawCompleted = data.draw_completed || false;
+                emailsSent = data.emails_sent || false;
+            }
+
             const groupStatus = participants.reduce((acc, p) => {
                 acc[p.group_id] = (acc[p.group_id] || 0) + 1;
                 return acc;
@@ -48,8 +60,8 @@ export default async function handler(request, response) {
                 count: participants.length,
                 groupStatus: groupStatus,
                 participants: participants,
-                draw_completed: data?.draw_completed || false,
-                emails_sent: data?.emails_sent || false,
+                draw_completed: drawCompleted,
+                emails_sent: emailsSent,
             });
         }
 
