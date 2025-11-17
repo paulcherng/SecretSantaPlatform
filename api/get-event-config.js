@@ -25,6 +25,10 @@ export default async function handler(request, response) {
         // 為了安全，只回傳頁面需要的公開資訊
         const publicConfig = {
             eventName: config.eventName,
+            giftAmount: config.giftAmount,
+            eventDate: config.eventDate,
+            eventLocation: config.eventLocation,
+            eventNotes: config.eventNotes,
             groups: config.groups,
         };
 

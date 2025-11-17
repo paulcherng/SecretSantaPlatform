@@ -29,6 +29,36 @@
             margin: 0; 
             padding: 40px 20px;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 聖誕裝飾 */
+        body::before {
+            content: '🎄';
+            position: fixed;
+            top: 5%;
+            left: 5%;
+            font-size: 3rem;
+            animation: float 3s ease-in-out infinite;
+            z-index: 0;
+            opacity: 0.6;
+        }
+        
+        body::after {
+            content: '🎅';
+            position: fixed;
+            bottom: 10%;
+            right: 5%;
+            font-size: 3rem;
+            animation: float 3s ease-in-out infinite 1s;
+            z-index: 0;
+            opacity: 0.6;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
         }
         
         h1, h2, h3 { color: var(--text-color); margin-top: 0; }
@@ -195,11 +225,32 @@
             gap: 8px;
         }
         
+        .wish-content {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
         .wish-content.hidden { 
             color: transparent; 
-            text-shadow: 0 0 8px rgba(0,0,0,0.5); 
-            user-select: none; 
-            cursor: pointer;
+            text-shadow: 0 0 12px rgba(0,0,0,0.8); 
+            user-select: none;
+            filter: blur(8px);
+            background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        
+        .wish-content.hidden:hover {
+            filter: blur(6px);
+            text-shadow: 0 0 10px rgba(0,0,0,0.6);
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         
         .hidden { display: none; }
@@ -218,63 +269,75 @@
 <body>
 
     <div id="login-section" class="page-container">
-        <h1>後台管理系統</h1>
+        <h1>🎅 聖誕老人的秘密基地</h1>
         <div class="form-group">
-            <label for="secret">請輸入管理密碼:</label>
-            <input type="password" id="secret">
+            <label for="secret">🔐 請輸入魔法密碼：</label>
+            <input type="password" id="secret" placeholder="只有聖誕老人知道的密碼...">
         </div>
-        <button class="btn-primary" onclick="login()">登入</button>
+        <button class="btn-primary" onclick="login()">✨ 進入秘密基地</button>
     </div>
 
     <!-- 畫面一：活動儀表板 -->
     <div id="events-dashboard" class="page-container hidden">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>活動儀表板</h2>
-            <button class="btn-primary" onclick="showView('create-event-view')">＋ 建立新活動</button>
+            <h2>🎄 聖誕活動控制台</h2>
+            <button class="btn-primary" onclick="showView('create-event-view')">✨ 創造新的聖誕魔法</button>
         </div>
         <div id="message-area-dashboard"></div>
-        <div id="events-list-container">載入活動列表中...</div>
+        <div id="events-list-container">正在召喚聖誕精靈...</div>
     </div>
     
     <!-- 畫面二：建立新活動 -->
     <div id="create-event-view" class="page-container hidden">
-        <h2>建立新活動</h2>
+        <h2>🎁 創造新的聖誕魔法</h2>
         <div class="form-group">
-            <label for="eventName">活動名稱</label>
-            <input type="text" id="eventName" placeholder="例如：2025 聖誕交換禮物">
+            <label for="eventName">🎄 這次聖誕派對叫什麼名字？</label>
+            <input type="text" id="eventName" placeholder="例如：2025 超級歡樂聖誕交換禮物大會">
         </div>
         <div class="form-group">
-            <label for="giftAmount">建議禮物金額</label>
-            <input type="text" id="giftAmount" placeholder="例如：$500 - $700 元">
+            <label for="giftAmount">💰 禮物要花多少錢呢？</label>
+            <input type="text" id="giftAmount" placeholder="例如：$500 - $700 元（不要太貴也不要太便宜喔～）">
         </div>
         <div class="form-group">
-            <label for="groupsConfig">組別設定 (JSON 格式)</label>
+            <label for="eventDate">📅 什麼時候交換禮物呢？</label>
+            <input type="text" id="eventDate" placeholder="例如：2025/12/25 晚上 7:00">
+        </div>
+        <div class="form-group">
+            <label for="eventLocation">📍 在哪裡舉辦呢？</label>
+            <input type="text" id="eventLocation" placeholder="例如：台北市信義區某某餐廳">
+        </div>
+        <div class="form-group">
+            <label for="eventNotes">📝 還有什麼要提醒大家的嗎？</label>
+            <textarea id="eventNotes" rows="3" placeholder="例如：請準時到場，記得帶禮物喔！"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="groupsConfig">👨‍👩‍👧‍👦 有哪些家庭要參加呢？(JSON 格式)</label>
             <textarea id="groupsConfig" rows="10">[
   { "id": 1, "name": "光佑", "limit": 1, "members": ["光佑"] },
   { "id": 2, "name": "Jefferson", "limit": 1, "members": ["Jefferson"] },
   { "id": 3, "name": "PJ一家", "limit": 2, "members": ["PJ", "PJ太太"] }
 ]</textarea>
-            <small>請依照 JSON 陣列格式填寫，確保 id 是從 1 開始的連續數字。members 陣列用來指定組別內的成員名單。</small>
+            <small>💡 小提示：id 要從 1 開始連續編號喔！members 陣列可以寫上家庭成員的名字～</small>
         </div>
-        <button class="btn-primary" onclick="handleCreateEvent()">確認建立</button>
-        <button class="btn-secondary" onclick="showView('events-dashboard')">取消</button>
+        <button class="btn-primary" onclick="handleCreateEvent()">🎉 開始這場聖誕派對！</button>
+        <button class="btn-secondary" onclick="showView('events-dashboard')">😅 我再想想...</button>
     </div>
 
     <!-- 畫面三：活動詳情管理 -->
     <div id="event-detail-view" class="page-container hidden">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 id="event-detail-title"></h2>
-            <button class="btn-secondary" onclick="showView('events-dashboard')">← 返回活動列表</button>
+            <button class="btn-secondary" onclick="showView('events-dashboard')">← 回到控制台</button>
         </div>
         <div id="message-area-detail"></div>
         <p id="status-text"></p>
         <div id="participants-table"></div>
         <div class="controls">
-            <button onclick="toggleWishes(this)">顯示願望</button>
-            <button id="draw-button" onclick="startDraw()">執行抽籤</button>
-            <button id="send-button" onclick="sendEmails()">寄送通知信</button>
-            <button onclick="loadEventDetail(currentEventId)">重新整理</button>
-            <button class="btn-danger" onclick="resetSystem()">清空參與者</button>
+            <button onclick="toggleWishes(this)">👀 偷看願望</button>
+            <button id="draw-button" onclick="startDraw()">🎲 開始抽籤魔法</button>
+            <button id="send-button" onclick="sendEmails()">📧 寄出魔法信件</button>
+            <button onclick="loadEventDetail(currentEventId)">🔄 重新整理</button>
+            <button class="btn-danger" onclick="resetSystem()">🗑️ 清空所有人</button>
         </div>
     </div>
 
@@ -380,6 +443,9 @@
     async function handleCreateEvent() {
         const eventName = document.getElementById('eventName').value;
         const giftAmount = document.getElementById('giftAmount').value;
+        const eventDate = document.getElementById('eventDate').value;
+        const eventLocation = document.getElementById('eventLocation').value;
+        const eventNotes = document.getElementById('eventNotes').value;
         const groupsConfigText = document.getElementById('groupsConfig').value;
         
         if (!eventName || !groupsConfigText) {
@@ -395,7 +461,14 @@
             alert('組別設定的 JSON 格式不正確，請檢查。'); return;
         }
         
-        const payload = { eventName, giftAmount, groups };
+        const payload = { 
+            eventName, 
+            giftAmount, 
+            eventDate,
+            eventLocation,
+            eventNotes,
+            groups 
+        };
         
         try {
             const response = await apiFetch('/api/create-event', { method: 'POST', body: JSON.stringify(payload) });
@@ -442,7 +515,7 @@
             
             document.getElementById('status-text').textContent = `人數: ${data.count} / ${totalLimit}`;
             
-            let html = '<table><thead><tr><th>ID</th><th>名字</th><th>Email</th><th>組別</th><th onclick="toggleWishes(this)" style="cursor:pointer;">許願內容 👁️</th><th>抽到誰(ID)</th><th>操作</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>ID</th><th>名字</th><th>Email</th><th>組別</th><th onclick="toggleWishes(this)" style="cursor:pointer;" title="點我切換顯示/隱藏">✨ 許願內容 (點我切換)</th><th>抽到誰(ID)</th><th>操作</th></tr></thead><tbody>';
             (data.participants || []).forEach(p => {
                 html += `<tr>
                     <td>${p.id}</td><td>${p.name}</td><td>${p.email}</td><td>${groupMap[p.group_id] || '未知'}</td>
@@ -451,6 +524,7 @@
                 </tr>`;
             });
             html += '</tbody></table>';
+            html += '<div style="text-align: center; margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; color: #92400e; font-weight: 600;">💡 小提示：願望內容預設是模糊的，點擊表格標題或下方按鈕可以切換顯示喔！</div>';
             document.getElementById('participants-table').innerHTML = html;
             
             const canDraw = data.count === totalLimit && !data.draw_completed;
@@ -466,7 +540,7 @@
         if (wishes.length === 0) return;
         const isHidden = wishes[0].classList.contains('hidden');
         wishes.forEach(w => w.classList.toggle('hidden'));
-        button.textContent = isHidden ? '隱藏願望' : '顯示願望';
+        button.textContent = isHidden ? '🙈 把願望藏起來' : '👀 偷看願望';
     }
     
     async function startDraw() {

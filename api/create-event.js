@@ -10,7 +10,7 @@ export default async function handler(request, response) {
     if (secret !== process.env.ADMIN_SECRET) return response.status(401).end();
 
     try {
-        const { eventName, giftAmount, submissionDeadline, groups } = request.body;
+        const { eventName, giftAmount, eventDate, eventLocation, eventNotes, submissionDeadline, groups } = request.body;
 
         // 簡單的輸入驗證
         if (!eventName || !groups || !Array.isArray(groups) || groups.length === 0) {
@@ -25,6 +25,9 @@ export default async function handler(request, response) {
             id: eventId,
             eventName: eventName.trim(),
             giftAmount: giftAmount || '未設定',
+            eventDate: eventDate || null,
+            eventLocation: eventLocation || null,
+            eventNotes: eventNotes || null,
             submissionDeadline: submissionDeadline || null,
             groups: groups, // 期待的格式: [{ id: 1, name: "組名", limit: 2 }, ...]
             createdAt: new Date().toISOString(),
