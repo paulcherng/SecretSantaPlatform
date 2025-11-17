@@ -186,6 +186,7 @@
     <div class="button-group">
         <button onclick="createEvent()">🎁 建立活動</button>
         <button onclick="listEvents()">📋 列出所有活動</button>
+        <button onclick="checkEnv()" style="background: #10b981;">🔧 檢查環境變數</button>
     </div>
 
     <div id="result" class="result" style="display:none;"></div>
@@ -258,6 +259,50 @@
                         <pre>${JSON.stringify(events, null, 2)}</pre>`;
                 } else {
                     resultDiv.innerHTML = `<h3>❌ 失敗</h3><p>${events.message || events.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<h3>❌ 錯誤</h3><p>${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        }
+
+        async function checkEnv() {
+            const secret = document.getElementById('adminSecret').value;
+            
+            if (!secret) {
+                alert('請先輸入管理密碼');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/check-env', {
+                    headers: {
+                        'Authorization': `Bearer ${secret}`
+                    }
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    let html = `<h3>${result.status}</h3>`;
+                    html += `<p><strong>完成度：</strong>${result.completion}</p>`;
+                    html += `<h4>環境變數狀態：</h4><ul style="text-align: left;">`;
+                    
+                    for (const [key, value] of Object.entries(result.variables)) {
+                        html += `<li><strong>${key}:</strong> ${value.value}</li>`;
+                    }
+                    
+                    html += `</ul><h4>建議：</h4><ul style="text-align: left;">`;
+                    result.recommendations.forEach(rec => {
+                        html += `<li>${rec}</li>`;
+                    });
+                    html += `</ul>`;
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ 失敗</h3><p>${result.error}</p>`;
                 }
             } catch (error) {
                 document.getElementById('result').innerHTML = `<h3>❌ 錯誤</h3><p>${error.message}</p>`;
