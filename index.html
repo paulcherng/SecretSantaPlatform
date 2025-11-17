@@ -539,6 +539,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const totalLimit = config.groups.reduce((sum, g) => sum + g.limit, 0);
 
+        // 檢查是否已經抽籤完成
+        if (statusData.draw_completed) {
+            statusText.textContent = '🎉 抽籤已完成！請查收你的魔法信件～';
+            form.style.display = 'none';
+            showMessage('活動已經開始囉！聖誕老人已經把任務寄給大家了～', 'success');
+            return;
+        }
+
+        // 檢查是否所有人都填完願望
         if (statusData.count >= totalLimit) {
             statusText.textContent = '耶！大家都許好願了～等聖誕老人來抽籤囉！🎅✨';
             form.style.display = 'none';

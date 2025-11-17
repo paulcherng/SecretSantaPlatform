@@ -66,7 +66,16 @@ export default async function handler(request, response) {
         }
 
         // 前台使用者：只回傳基本統計
-        const participants = Array.isArray(data) ? data : [];
+        let participants = [];
+        let drawCompleted = false;
+
+        if (Array.isArray(data)) {
+            participants = data;
+        } else if (data && typeof data === 'object') {
+            participants = data.participants || [];
+            drawCompleted = data.draw_completed || false;
+        }
+
         const groupStatus = participants.reduce((acc, p) => {
             acc[p.group_id] = (acc[p.group_id] || 0) + 1;
             return acc;
@@ -75,6 +84,7 @@ export default async function handler(request, response) {
         return response.status(200).json({
             count: participants.length,
             groupStatus: groupStatus,
+            draw_completed: drawCompleted,
         });
 
     } catch (error) {
