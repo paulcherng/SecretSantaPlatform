@@ -96,20 +96,193 @@
     </div>
 
 <script>
-    // 變數定義與畫面切換邏輯 (保持不變)
     let adminSecret = '';
-    let currentEventId = null;
-    function showView(viewId) { /* ... */ }
-    async function apiFetch(url, options = {}) { /* ... */ }
-    function showMessage(areaId, text, type = 'error') { /* ... */ }
-    function login() { /* ... */ }
-    async function loadEventsDashboard() { /* ... */ }
-    async function deleteEvent(eventId, eventName) { /* ... */ }
-    async function handleCreateEvent() { /* ... */ }
-    async function loadEventDetail(eventId) { /* ... */ }
-    function toggleWishes(button) { /* ... */ }
+    let currentEventId = null; // 用來追蹤目前正在管理的活動 ID
 
-    // --- 【最終版】串接 API 的函式 ---
+    // --- 畫面切換邏輯 ---
+    function showView(viewId) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('events-dashboard').classList.add('hidden');
+        document.getElementById('create-event-view').classList.add('hidden');
+        document.getElementById('event-detail-view').classList.add('hidden');
+        
+        // 清除可能存在的舊訊息
+        showMessage('message-area-dashboard', '', 'success');
+        showMessage('message-area-detail', '', 'success');
+
+        document.getElementById(viewId).classList.remove('hidden');
+        
+        if (viewId === 'events-dashboard') {
+            loadEventsDashboard();
+        }
+    }
+
+    // --- 核心 API 呼叫函式 ---
+    async function apiFetch(url, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...options.headers, 'Authorization': `Bearer ${adminSecret}` };
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+             alert('密碼錯誤或憑證已過期，請重新登入。');
+             window.location.reload(); 
+             throw new Error('密碼錯誤或憑證已過期。'); 
+        }
+        return response;
+    }
+    
+    function showMessage(areaId, text, type = 'error') {
+        const area = document.getElementById(areaId);
+        if (!text) {
+            area.innerHTML = '';
+            return;
+        }
+        area.innerHTML = `<div class="message ${type}">${text}</div>`;
+    }
+
+    // --- 登入 ---
+    async function login() {
+        adminSecret = document.getElementById('secret').value;
+        if (!adminSecret) { 
+            alert('請輸入密碼'); 
+            return; 
+        }
+        showView('events-dashboard');
+    }
+    
+    // --- 儀表板邏輯 (畫面一) ---
+    async function loadEventsDashboard() {
+        try {
+            const response = await apiFetch('/api/status');
+            if (!response.ok) throw new Error('無法載入活動列表');
+            const events = await response.json();
+            
+            const container = document.getElementById('events-list-container');
+            if (events.length === 0) {
+                container.innerHTML = '<p>目前沒有任何活動，請點擊右上角建立一個新活動。</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>活動名稱</th><th>活動 ID</th><th>建立時間</th><th>操作</th></tr></thead><tbody>';
+            events.forEach(event => {
+                html += `<tr>
+                    <td>${event.eventName}</td>
+                    <td>${event.id}</td>
+                    <td>${new Date(event.createdAt).toLocaleString()}</td>
+                    <td>
+                        <button class="btn-primary" onclick="loadEventDetail('${event.id}')">管理</button>
+                        <button class="btn-outline-danger" onclick="deleteEvent('${event.id}', '${event.eventName}')">刪除</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (error) {
+            showMessage('message-area-dashboard', error.message);
+        }
+    }
+
+    async function deleteEvent(eventId, eventName) {
+        if (!confirm(`！！！警告！！！\n您確定要永久刪除「${eventName}」這個活動嗎？\n所有相關資料都將被移除，此操作無法復原！`)) return;
+        try {
+            const response = await apiFetch('/api/delete-event', { method: 'POST', body: JSON.stringify({ eventId }) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage('message-area-dashboard', result.message, 'success');
+            loadEventsDashboard();
+        } catch (error) {
+            showMessage('message-area-dashboard', error.message);
+        }
+    }
+
+    // --- 建立活動邏輯 (畫面二) ---
+    async function handleCreateEvent() {
+        const eventName = document.getElementById('eventName').value;
+        const giftAmount = document.getElementById('giftAmount').value;
+        const groupsConfigText = document.getElementById('groupsConfig').value;
+        
+        if (!eventName || !groupsConfigText) {
+            alert('活動名稱和組別設定為必填項目。');
+            return;
+        }
+
+        let groups;
+        try {
+            groups = JSON.parse(groupsConfigText);
+            if (!Array.isArray(groups)) throw new Error();
+        } catch {
+            alert('組別設定的 JSON 格式不正確，請檢查。'); return;
+        }
+        
+        const payload = { eventName, giftAmount, groups };
+        
+        try {
+            const response = await apiFetch('/api/create-event', { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            
+            showView('events-dashboard');
+            showMessage('message-area-dashboard', `活動「${eventName}」已成功建立！`, 'success');
+        } catch (error) {
+            alert(`建立失敗: ${error.message}`);
+        }
+    }
+
+    // --- 活動詳情邏輯 (畫面三) ---
+    async function loadEventDetail(eventId) {
+        currentEventId = eventId;
+        showView('event-detail-view');
+        document.getElementById('participants-table').innerHTML = '載入參與者資料中...';
+        
+        try {
+            // 使用 Promise.all 來並行獲取設定和資料，速度更快
+            const [configResponse, dataResponse] = await Promise.all([
+                apiFetch('/api/status'), // 獲取所有活動設定
+                apiFetch(`/api/status?eventId=${eventId}`) // 獲取當前活動資料
+            ]);
+
+            if (!configResponse.ok) throw new Error('無法載入活動設定列表');
+            const configs = await configResponse.json();
+            const currentConfig = configs.find(c => c.id === eventId);
+            
+            if (!dataResponse.ok) throw new Error('無法載入活動詳情');
+            const data = await dataResponse.json();
+            
+            document.getElementById('event-detail-title').textContent = currentConfig.eventName;
+            
+            const groupMap = currentConfig.groups.reduce((acc, group) => {
+                acc[group.id] = group.name;
+                return acc;
+            }, {});
+            const totalLimit = currentConfig.groups.reduce((sum, g) => sum + g.limit, 0);
+            
+            document.getElementById('status-text').textContent = `人數: ${data.count} / ${totalLimit}`;
+            
+            let html = '<table><thead><tr><th>ID</th><th>名字</th><th>Email</th><th>組別</th><th onclick="toggleWishes(this)" style="cursor:pointer;">許願內容 👁️</th><th>抽到誰(ID)</th><th>操作</th></tr></thead><tbody>';
+            (data.participants || []).forEach(p => {
+                html += `<tr>
+                    <td>${p.id}</td><td>${p.name}</td><td>${p.email}</td><td>${groupMap[p.group_id] || '未知'}</td>
+                    <td class="wish-content hidden">${p.wish}</td><td>${p.assigned_to || 'N/A'}</td>
+                    <td><button class="btn-outline-danger" onclick="deleteParticipant(${p.id}, '${p.name}')" ${data.draw_completed ? 'disabled' : ''}>刪除</button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('participants-table').innerHTML = html;
+            
+            const canDraw = data.count === totalLimit && !data.draw_completed;
+            const canSend = data.draw_completed && !data.emails_sent;
+            document.getElementById('draw-button').disabled = !canDraw;
+            document.getElementById('send-button').disabled = !canSend;
+
+        } catch (error) { showMessage('message-area-detail', error.message); }
+    }
+
+    function toggleWishes(button) {
+        const wishes = document.querySelectorAll('.wish-content');
+        if (wishes.length === 0) return;
+        const isHidden = wishes[0].classList.contains('hidden');
+        wishes.forEach(w => w.classList.toggle('hidden'));
+        button.textContent = isHidden ? '隱藏願望' : '顯示願望';
+    }
+    
     async function startDraw() {
         if (!confirm('確定要執行抽籤嗎？此動作將儲存配對結果。')) return;
         try {
@@ -121,14 +294,13 @@
         } catch (error) {
             showMessage('message-area-detail', error.message, 'error');
         } finally {
-            loadEventDetail(currentEventId); // 無論成功失敗都刷新
+            loadEventDetail(currentEventId);
         }
     }
 
     async function sendEmails() {
-        const giftAmount = prompt("請輸入禮物金額範圍 (將顯示在信件中)", "未設定");
+        const giftAmount = prompt("請輸入禮物金額範圍 (將顯示在信件中)", "$500 - $700 元");
         if (!giftAmount) return;
-
         try {
             const payload = { eventId: currentEventId, giftAmount };
             const response = await apiFetch('/api/send-emails', { method: 'POST', body: JSON.stringify(payload) });
@@ -157,8 +329,18 @@
         }
     }
     
-    // resetSystem 函式在上一版已正確，無需修改
-    async function resetSystem() { /* ... */ }
+    async function resetSystem() {
+        if (!confirm('確定要清空這個活動的所有參與者資料嗎？活動設定將會保留。')) return;
+        try {
+            const response = await apiFetch('/api/reset', { method: 'POST', body: JSON.stringify({ eventId: currentEventId }) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage('message-area-detail', result.message, 'success');
+            loadEventDetail(currentEventId);
+        } catch (error) {
+            showMessage('message-area-detail', error.message, 'error');
+        }
+    }
 </script>
 
 </body>
