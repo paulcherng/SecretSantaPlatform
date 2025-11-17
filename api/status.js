@@ -1,68 +1,38 @@
-
-// api/status.js (多活動支援版)
+// api/status.js (全新的、公开版本)
 
 import { kv } from '@vercel/kv';
 
 export default async function handler(request, response) {
-    if (request.method !== 'GET') return response.status(405).end();
-       // --- 除錯 Log 開始 ---
-    console.log("--- 進入 /api/status ---");
-    const authHeader = request.headers.authorization;
-    const secret = authHeader?.split(' ')[1];
-    console.log("從前端收到的 Secret (Bearer Token):", secret);
-    console.log("伺服器環境變數中的 ADMIN_SECRET:", process.env.ADMIN_SECRET);
-    console.log("兩者是否相等?", secret === process.env.ADMIN_SECRET);
-    // --- 除錯 Log 結束 ---
-    if (secret !== process.env.ADMIN_SECRET) return response.status(401).end();
+    if (request.method !== 'GET') {
+        return response.status(405).json({ error: '不支援的請求方法' });
+    }
 
     try {
         const { eventId } = request.query;
-
-        if (eventId) {
-            // --- 模式二：獲取單一活動的詳細資料 ---
-            const eventData = await kv.get(`event:${eventId}:data`);
-            
-            if (eventData === null) {
-                return response.status(404).json({ message: '找不到指定的活動資料。' });
-            }
-            
-            // 與舊版邏輯類似，整理回傳資料
-            const participants = Array.isArray(eventData) ? eventData : eventData.participants || [];
-            const isDrawn = !Array.isArray(eventData) && eventData.draw_completed;
-            const emailsSent = !Array.isArray(eventData) && eventData.emails_sent;
-
-            return response.status(200).json({
-                draw_completed: isDrawn,
-                emails_sent: emailsSent,
-                count: participants.length,
-                participants: participants,
-            });
-
-        } else {
-            // --- 模式一：獲取所有活動的列表 ---
-            const eventIds = await kv.lrange('events_index', 0, -1);
-            if (!eventIds || eventIds.length === 0) {
-                return response.status(200).json([]); // 回傳空陣列表示沒有活動
-            }
-
-            // 為每一個 eventId 去取得它的 config
-            // 注意：如果活動很多，這裡可以優化，但對於少量活動是OK的
-            const eventConfigs = await kv.mget(...eventIds.map(id => `event:${id}:config`));
-            
-            // 過濾掉可能為 null 的結果 (如果 config 意外被刪除)
-            const validConfigs = eventConfigs.filter(config => config !== null);
-
-            return response.status(200).json(validConfigs);
+        if (!eventId || typeof eventId !== 'string') {
+            return response.status(400).json({ error: '缺少有效的活動 ID。' });
         }
 
+        // 这个 API 只负责获取参与者数据
+        const data = await kv.get(`event:${eventId}:data`);
+        
+        // 如果活动刚创建，data 可能是 null，这很正常
+        const participants = Array.isArray(data) ? data : [];
+        
+        // 计算每个组的人数
+        const groupStatus = participants.reduce((acc, p) => {
+            acc[p.group_id] = (acc[p.group_id] || 0) + 1;
+            return acc;
+        }, {});
+
+        // 回传公开所需的信息
+        return response.status(200).json({
+            count: participants.length,
+            groupStatus: groupStatus,
+        });
+
     } catch (error) {
-        console.error("Status API Error:", error);
-        return response.status(500).json({ message: '獲取狀態時發生錯誤。' });
+        console.error("Public Status API Error:", error);
+        return response.status(500).json({ error: '伺服器內部錯誤，無法獲取活動狀態。' });
     }
-
 }
-
-
-
-
-
