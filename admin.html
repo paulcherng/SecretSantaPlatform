@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>抽籤後台</title>
+    <!-- 沿用上次美化過的 CSS -->
+    <style>
+        :root { --primary-color: #007bff; --success-color: #28a745; --danger-color: #dc3545; --light-gray: #f8f9fa; --border-color: #dee2e6; --text-color: #212529; --text-muted: #6c757d; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray); color: var(--text-color); margin: 0; padding: 40px 20px; }
+        h1, h2, h3 { color: var(--text-color); }
+        h1 { text-align: center; margin-bottom: 2rem; }
+        .page-container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; vertical-align: middle; word-break: break-all; }
+        th { background-color: var(--light-gray); font-weight: 600; color: var(--text-muted); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f3f5; }
+        button { border: 1px solid transparent; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; margin: 0 4px; }
+        button:focus { outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-outline-danger { background-color: transparent; color: var(--danger-color); border-color: var(--danger-color); }
+        .btn-outline-danger:hover { background-color: var(--danger-color); color: white; }
+        button:disabled { background-color: #e9ecef; border-color: #e9ecef; color: #6c757d; cursor: not-allowed; opacity: 0.65; }
+        .message { padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 6px; }
+        .message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: .5rem; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; }
+        .wish-content.hidden { color: transparent; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="page-container">
+        <h1>後台管理系統</h1>
+        <div class="form-group">
+            <label for="secret">請輸入管理密碼:</label>
+            <input type="password" id="secret">
+        </div>
+        <button class="btn-primary" onclick="login()">登入</button>
+    </div>
+
+    <!-- 畫面一：活動儀表板 -->
+    <div id="events-dashboard" class="page-container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>活動儀表板</h2>
+            <button class="btn-primary" onclick="showView('create-event-view')">＋ 建立新活動</button>
+        </div>
+        <div id="message-area-dashboard"></div>
+        <div id="events-list-container">載入活動列表中...</div>
+    </div>
+    
+    <!-- 畫面二：建立新活動 -->
+    <div id="create-event-view" class="page-container hidden">
+        <h2>建立新活動</h2>
+        <div class="form-group">
+            <label for="eventName">活動名稱</label>
+            <input type="text" id="eventName" placeholder="例如：2025 聖誕交換禮物">
+        </div>
+        <div class="form-group">
+            <label for="giftAmount">建議禮物金額</label>
+            <input type="text" id="giftAmount" placeholder="例如：$500 - $700 元">
+        </div>
+        <div class="form-group">
+            <label for="groupsConfig">組別設定 (JSON 格式)</label>
+            <textarea id="groupsConfig" rows="8" placeholder='[&#10;  { "id": 1, "name": "光佑", "limit": 1 },&#10;  { "id": 2, "name": "Jefferson", "limit": 1 },&#10;  { "id": 3, "name": "PJ一家", "limit": 2 }&#10;]'></textarea>
+            <small>請依照 JSON 陣列格式填寫，確保 id 是從 1 開始的連續數字。</small>
+        </div>
+        <button class="btn-primary" onclick="handleCreateEvent()">確認建立</button>
+        <button class="btn-secondary" onclick="showView('events-dashboard')">取消</button>
+    </div>
+
+    <!-- 畫面三：活動詳情管理 -->
+    <div id="event-detail-view" class="page-container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="event-detail-title"></h2>
+            <button class="btn-secondary" onclick="showView('events-dashboard')">← 返回活動列表</button>
+        </div>
+        <div id="message-area-detail"></div>
+        <p id="status-text"></p>
+        <div id="participants-table"></div>
+        <div class="controls">
+            <button onclick="toggleWishes(this)">顯示願望</button>
+            <button id="draw-button" onclick="startDraw()">執行抽籤</button>
+            <button id="send-button" onclick="sendEmails()">寄送通知信</button>
+            <button onclick="loadEventDetail(currentEventId)">重新整理</button>
+            <button class="btn-danger" onclick="resetSystem()">清空參與者</button>
+        </div>
+    </div>
+
+<script>
+    // 變數定義與畫面切換邏輯 (保持不變)
+    let adminSecret = '';
+    let currentEventId = null;
+    function showView(viewId) { /* ... */ }
+    async function apiFetch(url, options = {}) { /* ... */ }
+    function showMessage(areaId, text, type = 'error') { /* ... */ }
+    function login() { /* ... */ }
+    async function loadEventsDashboard() { /* ... */ }
+    async function deleteEvent(eventId, eventName) { /* ... */ }
+    async function handleCreateEvent() { /* ... */ }
+    async function loadEventDetail(eventId) { /* ... */ }
+    function toggleWishes(button) { /* ... */ }
+
+    // --- 【最終版】串接 API 的函式 ---
+    async function startDraw() {
+        if (!confirm('確定要執行抽籤嗎？此動作將儲存配對結果。')) return;
+        try {
+            const payload = { eventId: currentEventId };
+            const response = await apiFetch('/api/draw', { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage('message-area-detail', result.message, 'success');
+        } catch (error) {
+            showMessage('message-area-detail', error.message, 'error');
+        } finally {
+            loadEventDetail(currentEventId); // 無論成功失敗都刷新
+        }
+    }
+
+    async function sendEmails() {
+        const giftAmount = prompt("請輸入禮物金額範圍 (將顯示在信件中)", "未設定");
+        if (!giftAmount) return;
+
+        try {
+            const payload = { eventId: currentEventId, giftAmount };
+            const response = await apiFetch('/api/send-emails', { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage('message-area-detail', result.message, 'success');
+        } catch (error) {
+            showMessage('message-area-detail', error.message, 'error');
+        } finally {
+            loadEventDetail(currentEventId);
+        }
+    }
+    
+    async function deleteParticipant(userId, userName) {
+        if (!confirm(`您確定要刪除「${userName}」的資料嗎？`)) return;
+        try {
+            const payload = { eventId: currentEventId, userId };
+            const response = await apiFetch('/api/delete-user', { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage('message-area-detail', result.message, 'success');
+        } catch (error) {
+            showMessage('message-area-detail', error.message, 'error');
+        } finally {
+            loadEventDetail(currentEventId);
+        }
+    }
+    
+    // resetSystem 函式在上一版已正確，無需修改
+    async function resetSystem() { /* ... */ }
+</script>
+
+</body>
+</html>

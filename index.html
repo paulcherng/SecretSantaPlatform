@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交換禮物抽籤系統</title>
+    <!-- 沿用之前美化過的 CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style> /* ... (省略與之前完全相同的 CSS) ... */ </style>
+</head>
+<body>
+    <div id="snow-container"></div>
+    <div class="container">
+        <h1 id="event-title">載入活動中...</h1>
+        <div id="message-area" class="message"></div>
+
+        <form id="wishForm" class="hidden">
+            <!-- 表單內容與之前相同 -->
+        </form>
+        
+        <div id="status-container">
+            <h3>目前進度</h3>
+            <p id="status-text">正在載入狀態...</p>
+        </div>
+    </div>
+
+<script>
+    // --- 全域變數 ---
+    let eventId = null;
+
+    // --- DOM 元素 ---
+    const form = document.getElementById('wishForm');
+    const eventTitle = document.getElementById('event-title');
+    const groupSelect = document.getElementById('group');
+    // ... 其他 DOM 元素
+
+    // --- 初始化函式 ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 從 URL 取得 eventId
+        const params = new URLSearchParams(window.location.search);
+        eventId = params.get('event');
+
+        if (!eventId) {
+            eventTitle.textContent = '無效的活動連結';
+            document.getElementById('status-text').textContent = '請確認您輸入的網址是否正確。';
+            return;
+        }
+        
+        try {
+            // 載入活動設定並產生表單
+            await loadEventConfig();
+            // 載入目前狀態
+            await updateStatus();
+            
+            form.classList.remove('hidden');
+        } catch (error) {
+            eventTitle.textContent = '活動載入失敗';
+            document.getElementById('status-text').textContent = error.message;
+        }
+        // ... (雪花動畫邏輯)
+    });
+
+    async function loadEventConfig() {
+        const response = await fetch(`/api/get-event-config?eventId=${eventId}`);
+        const config = await response.json();
+        if (!response.ok) throw new Error(config.error || '無法獲取活動設定');
+
+        eventTitle.textContent = config.eventName;
+        
+        // 動態產生組別選項
+        groupSelect.innerHTML = '<option value="">--請選擇--</option>'; // 清空舊選項
+        config.groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.name; // 初始文字
+            option.dataset.limit = group.limit; // 將 limit 存在 dataset 中
+            option.dataset.name = group.name;
+            groupSelect.appendChild(option);
+        });
+    }
+
+    async function updateStatus() {
+        // 這個函式與之前非常類似，但 API 呼叫會帶上 eventId
+        const response = await fetch(`/api/status?eventId=${eventId}`); // 注意: 公開 status 也需要 eventId
+        // ... (後續更新介面的邏輯與之前基本相同)
+    }
+
+    // --- 表單提交 ---
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            eventId: eventId, // **重要：提交時帶上 eventId**
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            group_id: parseInt(groupSelect.value),
+            wish: document.getElementById('wish').value,
+        };
+
+        const response = await fetch('/api/submit', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        // ... (後續處理邏輯與之前相同)
+    });
+</script>
+</body>
+</html>
