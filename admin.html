@@ -70,8 +70,8 @@
         </div>
         <div class="form-group">
             <label for="groupsConfig">組別設定 (JSON 格式)</label>
-            <textarea id="groupsConfig" rows="8" placeholder='[&#10;  { "id": 1, "name": "光佑", "limit": 1 },&#10;  { "id": 2, "name": "Jefferson", "limit": 1 },&#10;  { "id": 3, "name": "PJ一家", "limit": 2 }&#10;]'></textarea>
-            <small>請依照 JSON 陣列格式填寫，確保 id 是從 1 開始的連續數字。</small>
+            <textarea id="groupsConfig" rows="10" placeholder='[&#10;  { "id": 1, "name": "光佑", "limit": 1, "members": ["光佑"] },&#10;  { "id": 2, "name": "Jefferson", "limit": 1, "members": ["Jefferson"] },&#10;  { "id": 3, "name": "PJ一家", "limit": 2, "members": ["PJ", "PJ太太"] }&#10;]'></textarea>
+            <small>請依照 JSON 陣列格式填寫，確保 id 是從 1 開始的連續數字。members 陣列用來指定組別內的成員名單。</small>
         </div>
         <button class="btn-primary" onclick="handleCreateEvent()">確認建立</button>
         <button class="btn-secondary" onclick="showView('events-dashboard')">取消</button>
@@ -249,7 +249,10 @@
             document.getElementById('event-detail-title').textContent = currentConfig.eventName;
             
             const groupMap = currentConfig.groups.reduce((acc, group) => {
-                acc[group.id] = group.name;
+                const membersText = group.members && group.members.length > 0 
+                    ? ` [${group.members.join(', ')}]` 
+                    : '';
+                acc[group.id] = group.name + membersText;
                 return acc;
             }, {});
             const totalLimit = currentConfig.groups.reduce((sum, g) => sum + g.limit, 0);

@@ -106,7 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
         config.groups.forEach(group => {
             const option = document.createElement('option');
             option.value = group.id;
-            option.textContent = group.name; // 初始文字
+            // 如果有 members 陣列，顯示成員名單
+            const membersText = group.members && group.members.length > 0 
+                ? ` [${group.members.join(', ')}]` 
+                : '';
+            option.textContent = group.name + membersText; // 初始文字
             option.dataset.limit = group.limit;
             option.dataset.name = group.name;
             groupSelect.appendChild(option);
@@ -135,7 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupId = option.value;
             if (groupId) {
                 const currentCount = groupStatus[groupId] || 0;
-                option.textContent = `${option.dataset.name} (${currentCount}/${option.dataset.limit})`;
+                const group = config.groups.find(g => g.id == groupId);
+                const membersText = group?.members && group.members.length > 0 
+                    ? ` [${group.members.join(', ')}]` 
+                    : '';
+                option.textContent = `${option.dataset.name}${membersText} (${currentCount}/${option.dataset.limit})`;
                 option.disabled = false; // 保持可選，由後端驗證
             }
         });

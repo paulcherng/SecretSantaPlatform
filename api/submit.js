@@ -18,7 +18,7 @@ export default async function handler(request, response) {
         if (!config) return response.status(404).json({ message: '找不到此活動。' });
         if (data && data.draw_completed) return response.status(400).json({ message: '此活動已截止報名。' });
 
-        let participants = Array.isArray(data) ? data : [];
+        let participants = Array.isArray(data) ? data : (data?.participants || []);
         const totalLimit = config.groups.reduce((sum, g) => sum + g.limit, 0);
 
         // ... (修改願望與新增參與者的邏輯，與之前類似但現在基於 eventId)

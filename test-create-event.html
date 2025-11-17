@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>測試建立活動</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>測試建立活動功能</h1>
+    
+    <div class="form-group">
+        <label>管理密碼:</label>
+        <input type="password" id="adminSecret" placeholder="輸入 ADMIN_SECRET">
+    </div>
+
+    <div class="form-group">
+        <label>活動名稱:</label>
+        <input type="text" id="eventName" value="2025 測試交換禮物">
+    </div>
+
+    <div class="form-group">
+        <label>禮物金額:</label>
+        <input type="text" id="giftAmount" value="$500 - $700">
+    </div>
+
+    <div class="form-group">
+        <label>組別設定 (JSON):</label>
+        <textarea id="groupsConfig" rows="10">[
+  { "id": 1, "name": "光佑", "limit": 1, "members": ["光佑"] },
+  { "id": 2, "name": "Jefferson", "limit": 1, "members": ["Jefferson"] },
+  { "id": 3, "name": "PJ一家", "limit": 2, "members": ["PJ", "PJ太太"] }
+]</textarea>
+    </div>
+
+    <button onclick="createEvent()">建立活動</button>
+    <button onclick="listEvents()">列出所有活動</button>
+
+    <div id="result" class="result" style="display:none;"></div>
+
+    <script>
+        async function createEvent() {
+            const secret = document.getElementById('adminSecret').value;
+            const eventName = document.getElementById('eventName').value;
+            const giftAmount = document.getElementById('giftAmount').value;
+            const groupsConfig = document.getElementById('groupsConfig').value;
+
+            try {
+                const groups = JSON.parse(groupsConfig);
+                
+                const response = await fetch('/api/create-event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${secret}`
+                    },
+                    body: JSON.stringify({ eventName, giftAmount, groups })
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<h3>✅ 成功！</h3>
+                        <p><strong>活動 ID:</strong> ${result.event.id}</p>
+                        <p><strong>活動名稱:</strong> ${result.event.eventName}</p>
+                        <p><strong>前台連結:</strong> <a href="/?event=${result.event.id}" target="_blank">/?event=${result.event.id}</a></p>
+                        <pre>${JSON.stringify(result.event, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ 失敗</h3><p>${result.message || result.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<h3>❌ 錯誤</h3><p>${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        }
+
+        async function listEvents() {
+            const secret = document.getElementById('adminSecret').value;
+            
+            try {
+                const response = await fetch('/api/status', {
+                    headers: {
+                        'Authorization': `Bearer ${secret}`
+                    }
+                });
+
+                const events = await response.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<h3>📋 所有活動列表</h3>
+                        <pre>${JSON.stringify(events, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ 失敗</h3><p>${events.message || events.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<h3>❌ 錯誤</h3><p>${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

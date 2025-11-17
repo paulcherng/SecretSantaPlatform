@@ -15,7 +15,7 @@ export default async function handler(request, response) {
         
         if (data && data.draw_completed) return response.status(400).json({ message: '抽籤已完成，無法刪除！' });
         
-        let participants = Array.isArray(data) ? data : [];
+        let participants = Array.isArray(data) ? data : (data?.participants || []);
         const newParticipants = participants.filter(p => p.id !== userId)
                                           .map((p, index) => ({ ...p, id: index + 1 })); // 重新索引
 

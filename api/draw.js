@@ -15,9 +15,10 @@ export default async function handler(request, response) {
         const data = await kv.get(`event:${eventId}:data`);
         
         if (!config || !data) return response.status(404).json({ message: '找不到活動資料。' });
+        
+        // 處理兩種資料格式：陣列（舊格式）或物件（已抽籤格式）
+        const participants = Array.isArray(data) ? data : (data.participants || []);
         if (data.draw_completed) return response.status(400).json({ message: '此活動已抽過籤。' });
-
-        const participants = Array.isArray(data) ? data : [];
         const totalLimit = config.groups.reduce((sum, g) => sum + g.limit, 0);
         if (participants.length < totalLimit) return response.status(400).json({ message: '人數尚未到齊，無法抽籤！' });
 
